@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Find citing papers — Physics Index</title>
+  <link rel="stylesheet" href="./styles.css?v=1.4.0">
+</head>
+<body>
+  <main style="max-width: 760px; margin: 4rem auto; padding: 1.5rem;">
+    <h1>Find citing papers</h1>
+    <p id="citation-status" role="status">Looking up this DOI in OpenAlex…</p>
+    <p>This list covers OpenAlex only. It may differ from the count reported by Crossref.</p>
+    <p><a id="citation-destination" hidden>Open citing papers in OpenAlex</a></p>
+    <button id="citation-retry" type="button" hidden>Retry lookup</button>
+    <p><a href="./">Back to Physics Index</a></p>
+    <noscript>Enable JavaScript to look up citing papers.</noscript>
+  </main>
+  <script type="module" src="./js/citations-page.js?v=1.4.0"></script>
+</body>
+</html>

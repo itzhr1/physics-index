@@ -1,0 +1,9 @@
+.DS_Store
+.sites-runtime/
+node_modules/
+worker/node_modules/
+worker/.wrangler/
+worker/wrangler.toml
+.env
+.dev.vars
+*.log

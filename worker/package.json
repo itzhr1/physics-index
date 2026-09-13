@@ -1,0 +1,12 @@
+{
+  "name": "physics-index-worker",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev --config wrangler.toml",
+    "deploy": "wrangler deploy --config wrangler.toml"
+  },
+  "devDependencies": {
+    "wrangler": "^4.0.0"
+  }
+}

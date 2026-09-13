@@ -1,0 +1,16 @@
+name = "physics-index-api"
+main = "src/index.js"
+compatibility_date = "2026-09-01"
+
+[vars]
+# Use your exact GitHub Pages origin in production, for example:
+# CORS_ORIGIN = "https://your-name.github.io"
+CORS_ORIGIN = "*"
+
+# Non-secret contact identity recommended by Crossref.
+# CROSSREF_MAILTO = "you@example.org"
+
+# Add secrets with `npx wrangler secret put NAME` instead of this file:
+# OPENALEX_API_KEY
+# S2_API_KEY
+# ADS_API_TOKEN
