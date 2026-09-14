@@ -1,1 +1,192 @@
-m´ÎàßΩ©bu™‡∫gßµÿ¨∑¯ßuÏa∂iT±®m´ÎÄ›ÖπÓö(ß~)^¢ã≠~)^m∫ﬁjFÎy©ù y⁄.∂õ≠∫òß∂âbùÎ(~WßÇÿg∫`›uÁ(uÁ^rá^äzn∂^ñób≤ôZ ÿb≤g¨±®ä)È∫ÿß¶Î_äWùyˆÆñ◊ËÆÀ]äz(∫⁄n∂ã≠¶Î_äWùyˆÆñ◊ËÆÀ]¢Î
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Search physics literature across open scholarly sources by concept, question, DOI, arXiv ID, or subject area." />
+    <meta name="theme-color" content="#f5f3ed" />
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%2312202b'/%3E%3Ccircle cx='32' cy='32' r='6' fill='%23f5f3ed'/%3E%3Cellipse cx='32' cy='32' rx='23' ry='9' fill='none' stroke='%234c7dff' stroke-width='3' transform='rotate(25 32 32)'/%3E%3Cellipse cx='32' cy='32' rx='23' ry='9' fill='none' stroke='%234c7dff' stroke-width='3' transform='rotate(-25 32 32)'/%3E%3C/svg%3E" />
+    <title>Physics Index ‚Äî Scholarly search across sources</title>
+    <link rel="stylesheet" href="./styles.css?v=1.5.0" />
+  </head>
+  <body>
+    <a class="skip-link" href="#results">Skip to results</a>
+
+    <header class="masthead">
+      <a class="brand" href="./" aria-label="Physics Index home">
+        <span class="brand-mark" aria-hidden="true"><span></span></span>
+        <span>Physics Index</span>
+      </a>
+      <p>Open literature, one search.</p>
+      <span id="mode-badge" class="mode-badge">Direct mode ¬∑ 3 live sources</span>
+      <button id="about-button" class="icon-button" type="button" aria-label="About Physics Index" title="About Physics Index">?</button>
+    </header>
+
+    <main>
+      <section class="search-deck" aria-labelledby="search-heading">
+        <div class="search-intro">
+          <p class="eyebrow">MULTI-SOURCE DISCOVERY</p>
+          <h1 id="search-heading">Search the physics record.</h1>
+          <p>Ask a question, explore a concept, or paste a DOI or arXiv ID.</p>
+        </div>
+
+        <form id="search-form" class="search-form" role="search">
+          <div class="field query-field">
+            <label for="query">Search</label>
+            <div class="input-shell">
+              <svg aria-hidden="true" viewBox="0 0 24 24"><path d="m21 21-4.35-4.35m2.35-5.15a7.5 7.5 0 1 1-15 0 7.5 7.5 0 0 1 15 0Z"/></svg>
+              <input id="query" name="query" type="search" autocomplete="off" placeholder="Concept, question, DOI, arXiv ID‚Ä¶" />
+              <kbd>‚åò K</kbd>
+            </div>
+          </div>
+
+          <div class="field mode-field">
+            <label for="search-mode">Search in</label>
+            <select id="search-mode" name="mode">
+              <option value="all">All fields</option>
+              <option value="author">Author name</option>
+            </select>
+          </div>
+
+          <div class="field subject-field">
+            <span class="field-label">Physics areas</span>
+            <details id="subject-picker" class="subject-picker">
+              <summary><span id="subject-summary">All physics</span><span aria-hidden="true">‚åÑ</span></summary>
+              <fieldset>
+                <legend class="sr-only">Select one or more physics areas</legend>
+                <label><input type="checkbox" name="subject" value="all" checked /> All physics</label>
+                <label><input type="checkbox" name="subject" value="astro" /> Astrophysics &amp; cosmology</label>
+                <label><input type="checkbox" name="subject" value="condmat" /> Condensed matter</label>
+                <label><input type="checkbox" name="subject" value="hep" /> High-energy &amp; particle physics</label>
+                <label><input type="checkbox" name="subject" value="grav" /> Relativity &amp; gravitation</label>
+                <label><input type="checkbox" name="subject" value="quantum" /> Quantum physics &amp; information</label>
+                <label><input type="checkbox" name="subject" value="nuclear" /> Nuclear physics</label>
+                <label><input type="checkbox" name="subject" value="amo" /> Atomic, molecular &amp; optical</label>
+                <label><input type="checkbox" name="subject" value="stat" /> Statistical &amp; nonlinear physics</label>
+                <label><input type="checkbox" name="subject" value="math" /> Mathematical physics</label>
+                <label><input type="checkbox" name="subject" value="plasma" /> Plasma, fluids &amp; accelerators</label>
+                <label><input type="checkbox" name="subject" value="applied" /> Applied &amp; interdisciplinary</label>
+              </fieldset>
+            </details>
+          </div>
+
+          <button class="search-button" type="submit">
+            <span>Search</span>
+            <svg aria-hidden="true" viewBox="0 0 24 24"><path d="m8 5 7 7-7 7"/></svg>
+          </button>
+        </form>
+
+        <div class="example-row" aria-label="Example searches">
+          <span>Try</span>
+          <button type="button" data-example="quantum error correction">quantum error correction</button>
+          <button type="button" data-example="10.1103/PhysRevLett.116.061102">a DOI</button>
+          <button type="button" data-example="arXiv:1602.03837">an arXiv ID</button>
+          <span id="query-kind" class="query-kind" aria-live="polite"></span>
+        </div>
+
+        <div class="spectrum-ruler" aria-hidden="true">
+          <span class="astro"></span><span class="condmat"></span><span class="hep"></span><span class="quantum"></span><span class="grav"></span><span class="other"></span>
+        </div>
+      </section>
+
+      <div class="workspace">
+        <aside class="filter-rail" aria-label="Search sources and subjects">
+          <div class="rail-heading">
+            <h2>Sources</h2>
+            <span>6 supported</span>
+          </div>
+          <ul class="source-list">
+            <li data-source="openalex"><span class="source-dot openalex"></span><span>OpenAlex</span><span class="status">Ready</span></li>
+            <li data-source="crossref"><span class="source-dot crossref"></span><span>Crossref</span><span class="status">Ready</span></li>
+            <li data-source="arxiv"><span class="source-dot arxiv"></span><span>arXiv</span><span class="status gateway">Gateway</span></li>
+            <li data-source="semantic"><span class="source-dot semantic"></span><span>Semantic Scholar</span><span class="status gateway">Gateway</span></li>
+            <li data-source="inspire"><span class="source-dot inspire"></span><span>INSPIRE</span><span class="status">Ready</span></li>
+            <li data-source="nasa"><span class="source-dot nasa"></span><span>NASA ADS</span><span class="status locked">Key</span></li>
+          </ul>
+          <p class="rail-note">Availability is checked when you search. Click any author in a result to search that complete name. Subject mappings are approximate; exact identifiers bypass subject filters.</p>
+        </aside>
+
+        <section id="results" class="results" aria-labelledby="results-title" tabindex="-1">
+          <div class="results-heading">
+            <div>
+              <p class="eyebrow">STARTING POINT</p>
+              <h2 id="results-title">One paper, many records</h2>
+              <p id="result-summary">Example result ¬∑ run a search for live coverage</p>
+            </div>
+            <div class="result-controls">
+            <label class="sort-control">Entries per page
+              <select id="page-size" aria-label="Entries per page">
+                <option value="5">5</option>
+                <option value="10" selected>10</option>
+                <option value="20">20</option>
+                <option value="50">50</option>
+                <option value="all">All retrieved</option>
+              </select>
+            </label>
+            <label class="sort-control">Sort
+              <select id="sort" aria-label="Sort results" disabled>
+                <option value="relevance">Relevance</option>
+                <option value="newest">Newest first</option>
+                <option value="oldest">Oldest first</option>
+                <option value="citations">Most cited</option>
+              </select>
+            </label>
+            </div>
+          </div>
+
+          <div id="status" class="sr-only" role="status" aria-live="polite"></div>
+          <div id="source-summary" class="source-summary" aria-live="polite" hidden></div>
+          <p id="display-summary" class="display-summary" role="status" hidden></p>
+          <div id="load-more-panel" class="load-more-panel" hidden>
+            <button id="load-more" type="button">Load more search results</button>
+            <span id="load-more-status" role="status">Fetch the next batch from the sources.</span>
+          </div>
+          <div id="result-list" class="result-list">
+            <article class="result-card accent-grav">
+              <div class="result-kicker">
+                <span class="source-badge">Crossref + arXiv</span>
+                <span>Relativity & gravitation</span>
+                <time datetime="2016-02-11">11 Feb 2016</time>
+              </div>
+              <h3><a href="https://doi.org/10.1103/PhysRevLett.116.061102" target="_blank" rel="noreferrer">Observation of Gravitational Waves from a Binary Black Hole Merger</a></h3>
+              <p class="authors">B. P. Abbott et al. (LIGO Scientific Collaboration and Virgo Collaboration)</p>
+              <p class="abstract">A transient gravitational-wave signal consistent with the inspiral and merger of two stellar-mass black holes, marking the first direct detection of gravitational waves.</p>
+              <div class="result-footer">
+                <div class="identifiers">
+                  <a href="https://doi.org/10.1103/PhysRevLett.116.061102" target="_blank" rel="noreferrer"><span>DOI</span> 10.1103/PhysRevLett.116.061102</a>
+                  <a href="https://arxiv.org/abs/1602.03837" target="_blank" rel="noreferrer"><span>arXiv</span> 1602.03837</a>
+                </div>
+                <a class="view-paper" href="https://doi.org/10.1103/PhysRevLett.116.061102" target="_blank" rel="noreferrer">View paper <span aria-hidden="true">‚Üó</span></a>
+              </div>
+            </article>
+          </div>
+          <nav id="pagination" class="pagination" aria-label="Result pages" hidden>
+            <button id="previous-page" type="button">Previous</button>
+            <span id="page-label"></span>
+            <button id="next-page" type="button">Next</button>
+          </nav>
+        </section>
+      </div>
+    </main>
+
+    <dialog id="about-dialog" class="about-dialog" aria-labelledby="about-title">
+      <form method="dialog">
+        <button class="dialog-close" value="close" aria-label="Close information">√ó</button>
+        <p class="eyebrow">ABOUT</p>
+        <h2 id="about-title">A wider lens on physics literature</h2>
+        <p>Physics Index combines public scholarly records, then merges duplicates by DOI, arXiv ID, and bibliographic details. It is a discovery aid, not an exhaustive index.</p>
+        <dl>
+          <div><dt>Direct mode</dt><dd>Crossref, OpenAlex, and INSPIRE from the browser.</dd></div>
+          <div><dt>Gateway mode</dt><dd>Adds arXiv, Semantic Scholar, INSPIRE, and optional NASA ADS.</dd></div>
+        </dl>
+        <p class="dialog-note">Search text is sent only to the scholarly services shown in the source status.</p>
+      </form>
+    </dialog>
+
+    <footer>
+      <span>Physics Index</span>
+      <span>Coverage is source-dependent and not exhaustive. Data from participating scholarly APIs; arXiv use follows its API terms.</span>
+    </footer>
+    <script type="module" src="./app.js?v=1.5.0"></script>
+  </body>
+</html>
