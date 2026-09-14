@@ -1,7 +1,7 @@
 import { citationDestination } from './js/citation-lookup.js?v=1.4.0';
 import { CONFIG } from './js/config.js?v=1.5.0';
 import { citationLabels, citationSortCount, sortSearchResults, detectQuery, formatDate, paginateResults, dedupeResults, parseAuthorQuery, resolveSearchMode } from './js/core.js?v=1.11.0';
-import { searchDirectSources, searchGateway, SOURCE_CATALOG } from './js/providers.js?v=1.10.0';
+import { searchDirectSources, searchGateway, SOURCE_CATALOG } from './js/providers.js?v=1.12.0';
 import { physicsScope, scopeResults } from './js/physics-scope.js?v=1.10.0';
 import { getSubject, normalizeSubjectIds, subjectSelectionLabel, SUBJECTS } from './js/subjects.js?v=1.5.0';
 

@@ -187,6 +187,14 @@ function escapeInspire(value = '') {
   return String(value).replace(/["\\]/g, '\\$&');
 }
 
+export function inspireAuthorName(value = '') {
+  const name = String(value).trim();
+  if (name.includes(',')) return name;
+  const parts = name.split(/\s+/);
+  if (parts.length < 2) return name;
+  return `${parts.pop()}, ${parts.join(' ')}`;
+}
+
 async function searchInspire({ query, subjectIds, searchMode, signal, timeoutMs, limit, offset = 0, page = 1 }) {
   const detected = detectQuery(query);
   const exactPath = detected.type === 'doi' ? `/api/doi/${encodeURIComponent(detected.value)}` : detected.type === 'arxiv' ? `/api/arxiv/${encodeURIComponent(detected.value)}` : '';
@@ -197,9 +205,11 @@ async function searchInspire({ query, subjectIds, searchMode, signal, timeoutMs,
     const categories = subjectValues(subjectIds, 'inspire');
     const category = categories.length ? ` and (${categories.map((value) => `arxiv_eprints.categories:${value}`).join(' or ')})` : '';
     const term = searchMode === 'author'
-      ? parseAuthorQuery(detected.value).map((name) => `a "${escapeInspire(name)}"`).join(' and ')
+      ? parseAuthorQuery(detected.value).map((name) => `a "${escapeInspire(inspireAuthorName(name))}"`).join(' and ')
       : escapeInspire(detected.value);
-    const params = new URLSearchParams({ q: `${term}${category}`, size: String(Math.min(limit, 50)), page: String(page) });
+    // Keep every author's name without downloading hundreds of affiliations per paper.
+    const params = new URLSearchParams({ q: `${term}${category}`, size: String(Math.min(limit, 50)), page: String(page),
+      fields: 'titles,authors.full_name,dois,arxiv_eprints,publication_info,earliest_date,preprint_date,abstracts,citation_count,control_number,documents.key,documents.url' });
     payload = await fetchJson(`https://inspirehep.net/api/literature?${params}`, { signal, timeoutMs });
   }
   const hits = payload.hits?.hits || (payload.metadata ? [payload] : []);
