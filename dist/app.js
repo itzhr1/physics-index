@@ -1,7 +1,7 @@
 import { citationDestination } from './js/citation-lookup.js?v=1.4.0';
 import { CONFIG } from './js/config.js?v=1.5.0';
-import { citationLabels, detectQuery, formatDate, paginateResults, dedupeResults, parseAuthorQuery } from './js/core.js?v=1.8.0';
-import { searchDirectSources, searchGateway, SOURCE_CATALOG } from './js/providers.js?v=1.8.0';
+import { citationLabels, detectQuery, formatDate, paginateResults, dedupeResults, parseAuthorQuery, resolveSearchMode } from './js/core.js?v=1.9.0';
+import { searchDirectSources, searchGateway, SOURCE_CATALOG } from './js/providers.js?v=1.9.0';
 import { getSubject, normalizeSubjectIds, subjectSelectionLabel, SUBJECTS } from './js/subjects.js?v=1.5.0';
 
 const elements = {
@@ -98,7 +98,7 @@ function updateQueryKind() {
   const value = elements.query.value.trim();
   const detected = detectQuery(value);
   if (!value) elements.queryKind.textContent = '';
-  else if (elements.searchMode.value === 'author' && ['concept', 'question'].includes(detected.type)) {
+  else if (resolveSearchMode(value, elements.searchMode.value) === 'author') {
     const count = parseAuthorQuery(value).length;
     elements.queryKind.textContent = count > 1 ? `${count}-author search · all required` : 'Author search';
   } else elements.queryKind.textContent = detected.label;
@@ -363,6 +363,7 @@ function updateUrl(query, subjectIds, searchMode) {
   else url.searchParams.set('areas', subjectIds.join(','));
   url.searchParams.delete('area');
   if (searchMode === 'author') url.searchParams.set('mode', 'author');
+  else if (searchMode === 'all') url.searchParams.set('mode', 'all');
   else url.searchParams.delete('mode');
   history.replaceState(null, '', url);
 }
@@ -371,7 +372,7 @@ async function runSearch(overrides = {}) {
   const query = String(overrides.query ?? elements.query.value).trim();
   const subjectIds = normalizeSubjectIds(overrides.subjectIds ?? selectedSubjectIds());
   const requestedMode = overrides.searchMode ?? elements.searchMode.value;
-  const searchMode = requestedMode === 'author' && ['concept', 'question'].includes(detectQuery(query).type) ? 'author' : 'all';
+  const searchMode = resolveSearchMode(query, requestedMode);
   if (!query) {
     elements.query.focus();
     elements.status.textContent = 'Enter a concept, question, DOI, or identifier to search.';
@@ -394,7 +395,7 @@ async function runSearch(overrides = {}) {
   state.searchMode = searchMode;
   elements.query.value = query;
   setSubjectIds(subjectIds);
-  elements.searchMode.value = searchMode;
+  elements.searchMode.value = requestedMode;
   updateQueryKind();
   setLoading(true);
   updateSourceStatuses(initialSourceStatuses(true));
@@ -408,7 +409,7 @@ async function runSearch(overrides = {}) {
   elements.displaySummary.hidden = true;
   renderSkeletons();
   elements.status.textContent = `Searching for ${query}.`;
-  updateUrl(query, subjectIds, searchMode);
+  updateUrl(query, subjectIds, requestedMode);
 
   try {
     let data;
@@ -624,7 +625,7 @@ const initialQuery = initialParams.get('q')?.trim();
 const initialAreas = initialParams.get('areas') || initialParams.get('area');
 if (initialQuery) {
   const subjectIds = normalizeSubjectIds(initialAreas);
-  const searchMode = initialParams.get('mode') === 'author' ? 'author' : 'all';
+  const searchMode = ['author', 'all'].includes(initialParams.get('mode')) ? initialParams.get('mode') : 'auto';
   elements.query.value = initialQuery;
   setSubjectIds(subjectIds);
   elements.searchMode.value = searchMode;

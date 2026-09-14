@@ -102,8 +102,9 @@ export function authorNameMatches(query = '', candidate = '') {
   const partMatches = (part, candidatePart) => candidatePart === part
     || (part.length === 1 && candidatePart.startsWith(part))
     || (candidatePart.length === 1 && part.startsWith(candidatePart));
-  if (!partMatches(wanted.at(-1), available.at(-1))) return false;
+  if (wanted.at(-1) !== available.at(-1)) return false;
   const given = available.slice(0, -1);
+  if (!given.length || !partMatches(wanted[0], given[0])) return false;
   let cursor = 0;
   return wanted.slice(0, -1).every((part) => {
     const index = given.findIndex((candidatePart, candidateIndex) => candidateIndex >= cursor && partMatches(part, candidatePart));
@@ -111,6 +112,15 @@ export function authorNameMatches(query = '', candidate = '') {
     cursor = index + 1;
     return true;
   });
+}
+
+export function resolveSearchMode(query, mode = 'auto') {
+  if (!['concept', 'question'].includes(detectQuery(query).type)) return 'all';
+  if (mode === 'author' || mode === 'all') return mode;
+  // Deliberately narrow: an initial followed by a capitalized surname.
+  const names = parseAuthorQuery(query);
+  const initialName = /^(?:[A-Z]\.?(?:\s*)){1,4}\s+\p{Lu}[\p{L}'’\-]+(?:\s+\p{Lu}[\p{L}'’\-]+)*$/u;
+  return names.length && names.every(name => initialName.test(name)) ? 'author' : 'all';
 }
 
 export function parseAuthorQuery(query = '') {

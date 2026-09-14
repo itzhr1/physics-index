@@ -1,4 +1,4 @@
-import { abstractFromIndex, authorNameMatches, authorsMatchQuery, citationMetrics, dedupeResults, detectQuery, normalizeArxiv, normalizeDoi, parseAuthorQuery, stripMarkup, supportsQuery } from './core.js?v=1.8.0';
+import { abstractFromIndex, authorNameMatches, authorsMatchQuery, citationMetrics, dedupeResults, detectQuery, normalizeArxiv, normalizeDoi, parseAuthorQuery, stripMarkup, supportsQuery } from './core.js?v=1.9.0';
 import { getSubjects, normalizeSubjectIds } from './subjects.js?v=1.5.0';
 
 const SOURCE_CATALOG = [
