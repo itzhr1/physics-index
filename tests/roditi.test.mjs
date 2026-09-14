@@ -5,7 +5,7 @@ import {searchDirectSources} from '../dist/js/providers.js';
 
 test('Roditi search requires first initial and complete surname', () => {
   for (const name of ['I. Roditi', 'Itzhak Roditi', 'Roditi, Itzhak']) assert.equal(authorNameMatches('I Roditi', name), true);
-  for (const name of ['David Roditi', 'Claudio Roditi', 'David I. Roditi', 'Itzhak R.']) assert.equal(authorNameMatches('I Roditi', name), false);
+  for (const name of ['David Roditi', 'Roditi, David', 'Claudio Roditi', 'Roditi, Claudio', 'David I. Roditi', 'Itzhak R.']) assert.equal(authorNameMatches('I Roditi', name), false);
   assert.equal(authorNameMatches('B.P. Abbott', 'BP Abbott'), true);
 });
 

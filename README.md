@@ -8,7 +8,7 @@ The static site works immediately with Crossref, OpenAlex, and INSPIRE-HEP. An o
 
 ## What is included
 
-Search defaults to Automatic, which recognizes an initial followed by a capitalized surname (for example, `I Roditi`) as an author query. Choose Author name for full names or All fields to explicitly request a broad search. Author matching checks the first given name/initial and the full surname. Initials cannot distinguish different researchers with the same initial and surname; the source databases include non-physics literature.
+Search defaults to Automatic, which recognizes an initial followed by a capitalized surname (for example, `A. Einstein`) as an author query. Choose Author name for full names or All fields to explicitly request a broad search. Author matching checks the first given name/initial and the full surname. Initials cannot distinguish different researchers with the same initial and surname; the source databases include non-physics literature.
 
 The latest corrections preserve Load more after batches with no matching authors, add INSPIRE pagination, accept compact uppercase initials such as `BP Abbott`, and reset concept examples to All fields mode. A note beside the results explains source-specific area filtering. Direct-mode continuation now covers OpenAlex, Crossref, and INSPIRE; the optional gateway still returns one batch.
 
