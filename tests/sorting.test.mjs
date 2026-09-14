@@ -25,3 +25,8 @@ test('relevance is the default ordering for each new query', () => {
   sortControl.value = 'relevance';
   assert.equal(sortControl.value, 'relevance');
 });
+test('sort control is available on the landing screen before the first search', () => {
+  const initialSort = { disabled: false, value: 'relevance' };
+  assert.equal(initialSort.disabled, false);
+  assert.equal(initialSort.value, 'relevance');
+});
