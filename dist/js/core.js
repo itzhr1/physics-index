@@ -187,6 +187,23 @@ export function citationLabels(metrics = []) {
   return [...groups].map(([count, sources]) => `${count.toLocaleString()} ${count === 1 ? 'citation' : 'citations'} · ${[...sources].join(' / ')}`);
 }
 
+export function citationSortCount(record) {
+  const counts = (record.citationMetrics || []).map(metric => metric.count)
+    .filter(count => typeof count === 'number' && Number.isFinite(count) && count >= 0);
+  if (counts.length) return Math.max(...counts);
+  return typeof record.citationCount === 'number' && Number.isFinite(record.citationCount) && record.citationCount >= 0 ? record.citationCount : -1;
+}
+
+export function sortSearchResults(records, order) {
+  const items = [...records];
+  switch (order) {
+    case 'newest': return items.sort((a, b) => String(b.date || b.year || '').localeCompare(String(a.date || a.year || '')));
+    case 'oldest': return items.sort((a, b) => String(a.date || a.year || '9999').localeCompare(String(b.date || b.year || '9999')));
+    case 'citations': return items.sort((a, b) => citationSortCount(b) - citationSortCount(a));
+    default: return items.sort((a, b) => Number(b.score || 0) - Number(a.score || 0));
+  }
+}
+
 function mergePair(a, b) {
   const preferredDate = [a.date, b.date].filter(Boolean).sort()[0] || '';
   const authors = (b.authors?.length || 0) > (a.authors?.length || 0) ? b.authors : a.authors;

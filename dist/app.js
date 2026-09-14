@@ -1,6 +1,6 @@
 import { citationDestination } from './js/citation-lookup.js?v=1.4.0';
 import { CONFIG } from './js/config.js?v=1.5.0';
-import { citationLabels, detectQuery, formatDate, paginateResults, dedupeResults, parseAuthorQuery, resolveSearchMode } from './js/core.js?v=1.10.0';
+import { citationLabels, citationSortCount, sortSearchResults, detectQuery, formatDate, paginateResults, dedupeResults, parseAuthorQuery, resolveSearchMode } from './js/core.js?v=1.11.0';
 import { searchDirectSources, searchGateway, SOURCE_CATALOG } from './js/providers.js?v=1.10.0';
 import { physicsScope, scopeResults } from './js/physics-scope.js?v=1.10.0';
 import { getSubject, normalizeSubjectIds, subjectSelectionLabel, SUBJECTS } from './js/subjects.js?v=1.5.0';
@@ -288,6 +288,10 @@ function resultCard(result) {
   facts.append(element('span', { text: ({ physics: 'Physics-related metadata', other: 'Other discipline', unknown: 'Subject unclassified' })[physicsScope(result)] }));
   if (result.venue) facts.append(element('span', { text: result.venue }));
   const metrics = result.citationMetrics || [];
+  if (elements.sort.value === 'citations') {
+    const count = citationSortCount(result);
+    facts.append(element('span', { text: count < 0 ? 'Citation sort: unknown' : `Citation sort: ${count.toLocaleString()} (highest reported count)` }));
+  }
   for (const label of citationLabels(metrics)) {
     facts.append(element('span', { text: label, attrs: { title: 'Counts reported by each index; coverage and update times differ. Counts are not added together.' } }));
   }
@@ -313,13 +317,7 @@ function scopedResults() {
 }
 
 function sortedResults() {
-  const items = [...scopedResults().visible];
-  switch (elements.sort.value) {
-    case 'newest': return items.sort((a, b) => String(b.date || b.year || '').localeCompare(String(a.date || a.year || '')));
-    case 'oldest': return items.sort((a, b) => String(a.date || a.year || '9999').localeCompare(String(b.date || b.year || '9999')));
-    case 'citations': return items.sort((a, b) => Number(b.citationCount || 0) - Number(a.citationCount || 0));
-    default: return items.sort((a, b) => Number(b.score || 0) - Number(a.score || 0));
-  }
+  return sortSearchResults(scopedResults().visible, elements.sort.value);
 }
 
 function renderResults() {
@@ -337,7 +335,7 @@ function renderResults() {
   if (!unrestricted && groups.unknown.length) {
     const details = element('details', {}, element('summary', { text: `Review ${groups.unknown.length} unclassified records — may include physics` }));
     details.addEventListener('toggle', () => {
-      if (details.open && details.childNodes.length === 1) details.append(...groups.unknown.map(resultCard));
+      if (details.open && details.childNodes.length === 1) details.append(...sortSearchResults(groups.unknown, elements.sort.value).map(resultCard));
     });
     scopeDetails.append(details);
   }
@@ -347,6 +345,7 @@ function renderResults() {
   elements.pagination.hidden = pagination.pageCount <= 1;
   elements.displaySummary.hidden = !items.length;
   elements.displaySummary.textContent = `Showing ${pagination.start}–${pagination.end} of ${pagination.total} retrieved records. Sorting applies to these records.`;
+  if (elements.sort.value === 'citations') elements.displaySummary.textContent += ' Highest reported citation count first; unknown counts last. Counts from different indexes are not added. Load more to retrieve additional papers before sorting.';
   elements.pageLabel.textContent = `Page ${pagination.page} of ${pagination.pageCount}`;
   elements.previous.disabled = pagination.page <= 1;
   elements.next.disabled = pagination.page >= pagination.pageCount;

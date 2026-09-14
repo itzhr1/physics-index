@@ -227,6 +227,8 @@ select { padding: 0 42px 0 15px; cursor: pointer; }
 
 .author-help { margin: 12px 18px 0; color: var(--muted); font-size: .82rem; }
 .author-help strong { color: var(--ink); }
+.author-help label:has(#include-other) { display: inline-flex; align-items: center; gap: 7px; cursor: pointer; }
+#include-other { width: 16px; height: 16px; min-height: 16px; padding: 0; margin: 0; flex: 0 0 16px; accent-color: var(--cobalt); }
 .author-help kbd, .author-help span { font-family: var(--mono); color: var(--cobalt); }
 .author-help kbd { padding: 1px 5px; border: 1px solid var(--rule); border-radius: 3px; background: #fff; }
 
