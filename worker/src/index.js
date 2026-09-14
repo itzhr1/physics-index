@@ -1,4 +1,4 @@
-import { abstractFromIndex, authorNameMatches, citationMetrics, dedupeResults, detectQuery, normalizeArxiv, normalizeDoi, stripMarkup, supportsQuery } from '../../dist/js/core.js';
+import { abstractFromIndex, authorNameMatches, authorsMatchQuery, citationMetrics, dedupeResults, detectQuery, normalizeArxiv, normalizeDoi, parseAuthorQuery, stripMarkup, supportsQuery } from '../../dist/js/core.js';
 import { getSubjects, normalizeSubjectIds, subjectSelectionLabel } from '../../dist/js/subjects.js';
 
 const SOURCES = [
@@ -129,9 +129,9 @@ async function openAlexSearch({ detected, subjects, searchMode, limit, env }) {
   const filters = [];
   if (detected.type === 'doi') filters.push(`doi:${detected.value}`);
   else if (searchMode === 'author') {
-    const authorIds = await openAlexAuthorIds(detected.value, env);
-    if (!authorIds.length) return [];
-    filters.push(`authorships.author.id:${authorIds.join('|')}`);
+    const authorGroups = await Promise.all(parseAuthorQuery(detected.value).map((name) => openAlexAuthorIds(name, env)));
+    if (!authorGroups.length || authorGroups.some((ids) => !ids.length)) return [];
+    filters.push(...authorGroups.map((ids) => `authorships.author.id:${ids.join('|')}`));
   }
   else if (detected.type === 'question' && env.OPENALEX_API_KEY) params.set('search.semantic', detected.value);
   else params.set('search', detected.value);
@@ -141,7 +141,8 @@ async function openAlexSearch({ detected, subjects, searchMode, limit, env }) {
   if (env.OPENALEX_API_KEY) params.set('api_key', env.OPENALEX_API_KEY);
   const response = await fetchWithPolicy(`https://api.openalex.org/works?${params}`, { headers: { Accept: 'application/json' } });
   const data = await response.json();
-  return (data.results || []).map(openAlexResult);
+  return (data.results || []).map(openAlexResult)
+    .filter((work) => searchMode !== 'author' || authorsMatchQuery(detected.value, work.authors));
 }
 
 function crossrefDate(item) {
@@ -179,7 +180,7 @@ async function crossrefSearch({ detected, searchMode, limit, env }) {
     url = `https://api.crossref.org/v1/works/${encodeURIComponent(detected.value)}`;
   } else {
     const params = new URLSearchParams({ rows: String(limit), select: 'DOI,title,author,abstract,published,published-print,created,container-title,publisher,URL,license,is-referenced-by-count,subject,subtitle' });
-    params.set(searchMode === 'author' ? 'query.author' : 'query.bibliographic', detected.value);
+    params.set(searchMode === 'author' ? 'query.author' : 'query.bibliographic', searchMode === 'author' ? parseAuthorQuery(detected.value)[0] : detected.value);
     if (env.CROSSREF_MAILTO) params.set('mailto', env.CROSSREF_MAILTO);
     url = `https://api.crossref.org/v1/works?${params}`;
   }
@@ -187,7 +188,7 @@ async function crossrefSearch({ detected, searchMode, limit, env }) {
   const data = await response.json();
   const items = detected.type === 'doi' ? (data.message ? [data.message] : []) : (data.message?.items || []);
   return items.map(crossrefResult)
-    .filter((work) => searchMode !== 'author' || work.authors.some((author) => authorNameMatches(detected.value, author)));
+    .filter((work) => searchMode !== 'author' || authorsMatchQuery(detected.value, work.authors));
 }
 
 function semanticResult(paper, rank) {
@@ -228,7 +229,7 @@ async function semanticSearch({ detected, searchMode, limit, env }) {
   const response = await fetchWithPolicy(`https://api.semanticscholar.org/graph/v1/paper/search?${params}`, { headers });
   const data = await response.json();
   return (data.data || []).map(semanticResult)
-    .filter((work) => searchMode !== 'author' || work.authors.some((author) => authorNameMatches(detected.value, author)));
+    .filter((work) => searchMode !== 'author' || authorsMatchQuery(detected.value, work.authors));
 }
 
 function inspireResult(hit, rank) {
@@ -268,12 +269,14 @@ async function inspireSearch({ detected, subjects, searchMode, limit }) {
   }
   const categories = subjectValues(subjects, 'inspire');
   const category = categories.length ? ` and (${categories.map((value) => `arxiv_eprints.categories:${value}`).join(' or ')})` : '';
-  const term = searchMode === 'author' ? `a "${escapeQuery(detected.value)}"` : escapeQuery(detected.value);
+  const term = searchMode === 'author'
+    ? parseAuthorQuery(detected.value).map((name) => `a "${escapeQuery(name)}"`).join(' and ')
+    : escapeQuery(detected.value);
   const params = new URLSearchParams({ q: `${term}${category}`, size: String(limit), sort: searchMode === 'author' ? 'bestmatch' : 'mostrecent' });
   const response = await fetchWithPolicy(`https://inspirehep.net/api/literature?${params}`, { headers: { Accept: 'application/json' } }, 0);
   const data = await response.json();
   return (data.hits?.hits || []).map(inspireResult)
-    .filter((work) => searchMode !== 'author' || work.authors.some((author) => authorNameMatches(detected.value, author)));
+    .filter((work) => searchMode !== 'author' || authorsMatchQuery(detected.value, work.authors));
 }
 
 function atomTag(entry, name) {
@@ -323,7 +326,10 @@ async function arxivSearch({ detected, subjects, searchMode, limit }) {
   else {
     const subjectCategories = subjectValues(subjects, 'arxiv');
     const categories = subjectCategories.length ? ` AND (${subjectCategories.map((value) => `cat:${value}`).join(' OR ')})` : '';
-    params.set('search_query', `${searchMode === 'author' ? 'au' : 'all'}:"${escapeQuery(detected.value)}"${categories}`);
+    const terms = searchMode === 'author'
+      ? parseAuthorQuery(detected.value).map((name) => `au:"${escapeQuery(name)}"`).join(' AND ')
+      : `all:"${escapeQuery(detected.value)}"`;
+    params.set('search_query', `${terms}${categories}`);
   }
   const response = await fetchWithPolicy(`https://export.arxiv.org/api/query?${params}`, { headers: { Accept: 'application/atom+xml', 'User-Agent': 'PhysicsIndex/1.0' }, timeoutMs: 12000 }, 0);
   return arxivEntries(await response.text());
@@ -359,7 +365,7 @@ async function adsSearch({ detected, searchMode, limit, env }) {
   const identifierTypes = ['doi', 'arxiv', 'bibcode'];
   const q = identifierTypes.includes(detected.type)
     ? `identifier:"${escapeQuery(detected.value)}"`
-    : `${searchMode === 'author' ? `author:"${escapeQuery(detected.value)}"` : `(${escapeQuery(detected.value)})`} AND database:(astronomy OR physics)`;
+    : `${searchMode === 'author' ? parseAuthorQuery(detected.value).map((name) => `author:"${escapeQuery(name)}"`).join(' AND ') : `(${escapeQuery(detected.value)})`} AND database:(astronomy OR physics)`;
   const params = new URLSearchParams({ q, rows: String(limit), fl: 'bibcode,title,author,abstract,pubdate,year,pub,doi,identifier,arxiv_class,property,citation_count', sort: 'score desc' });
   const response = await fetchWithPolicy(`https://api.adsabs.harvard.edu/v1/search/query?${params}`, { headers: { Accept: 'application/json', Authorization: `Bearer ${env.ADS_API_TOKEN}` } });
   const data = await response.json();

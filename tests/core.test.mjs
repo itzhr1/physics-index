@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { authorNameMatches, dedupeResults, detectQuery, normalizeArxiv, normalizeDoi, stripMarkup, paginateResults } from '../dist/js/core.js';
+import { authorNameMatches, authorsMatchQuery, dedupeResults, detectQuery, normalizeArxiv, normalizeDoi, parseAuthorQuery, stripMarkup, paginateResults } from '../dist/js/core.js';
 import { normalizeSubjectIds, subjectSelectionLabel } from '../dist/js/subjects.js';
 import worker from '../worker/src/index.js';
 
@@ -28,6 +28,12 @@ test('author matching keeps all supplied parts within one name and accepts initi
   assert.equal(authorNameMatches('Albert Einstein', 'Albert Michelson'), false);
   assert.equal(['Albert Michelson', 'Boris Einstein'].some((name) => authorNameMatches('Albert Einstein', name)), false);
   assert.equal(authorNameMatches('A. Einstein', 'Einstein Sandra Aleksic'), false);
+});
+
+test('multi-author queries require every plus-separated author on the same record', () => {
+  assert.deepEqual(parseAuthorQuery('A. Einstein + N. Rosen'), ['A. Einstein', 'N. Rosen']);
+  assert.equal(authorsMatchQuery('A. Einstein + N. Rosen', ['Albert Einstein', 'Nathan Rosen']), true);
+  assert.equal(authorsMatchQuery('A. Einstein + N. Rosen', ['Albert Einstein', 'Boris Podolsky']), false);
 });
 
 test('normalizes one or several physics area selections', () => {

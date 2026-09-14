@@ -38,6 +38,27 @@ test('author mode uses provider author routes and rejects split-name matches', a
   } finally { globalThis.fetch = original; }
 });
 
+test('multi-author mode creates one OpenAlex author filter per requested author', async () => {
+  const original = globalThis.fetch;
+  const urls = [];
+  globalThis.fetch = async (input) => {
+    const url = new URL(input); urls.push(url);
+    if (url.pathname === '/authors') {
+      const isRosen = url.searchParams.get('search').includes('Rosen');
+      return Response.json({ results: [{ id: `https://openalex.org/${isRosen ? 'A2' : 'A1'}`, display_name: isRosen ? 'Nathan Rosen' : 'Albert Einstein' }] });
+    }
+    if (url.hostname === 'api.openalex.org') return Response.json({ results: [{ id: 'W1', title: 'Joint work', authorships: [{ author: { display_name: 'Albert Einstein' } }, { author: { display_name: 'Nathan Rosen' } }] }], meta: {} });
+    if (url.hostname === 'api.crossref.org') return Response.json({ message: { items: [], 'total-results': 0 } });
+    return Response.json({ hits: { hits: [] } });
+  };
+  try {
+    const data = await searchDirectSources({ query: 'A. Einstein + N. Rosen', searchMode: 'author' });
+    const filter = urls.find((url) => url.hostname === 'api.openalex.org' && url.pathname === '/works').searchParams.get('filter');
+    assert.match(filter, /authorships\.author\.id:A1,authorships\.author\.id:A2/);
+    assert.equal(data.results.length, 1);
+  } finally { globalThis.fetch = original; }
+});
+
 test('multiple areas are combined as OR filters for mapped providers', async () => {
   const original = globalThis.fetch;
   const urls = [];

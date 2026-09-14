@@ -1,7 +1,7 @@
 import { citationDestination } from './js/citation-lookup.js?v=1.4.0';
 import { CONFIG } from './js/config.js?v=1.5.0';
-import { citationLabels, detectQuery, formatDate, paginateResults, dedupeResults } from './js/core.js?v=1.5.0';
-import { searchDirectSources, searchGateway, SOURCE_CATALOG } from './js/providers.js?v=1.5.0';
+import { citationLabels, detectQuery, formatDate, paginateResults, dedupeResults, parseAuthorQuery } from './js/core.js?v=1.6.0';
+import { searchDirectSources, searchGateway, SOURCE_CATALOG } from './js/providers.js?v=1.6.0';
 import { getSubject, normalizeSubjectIds, subjectSelectionLabel, SUBJECTS } from './js/subjects.js?v=1.5.0';
 
 const elements = {
@@ -97,7 +97,11 @@ function updateQueryKind() {
   elements.query.setCustomValidity('');
   const value = elements.query.value.trim();
   const detected = detectQuery(value);
-  elements.queryKind.textContent = value ? (elements.searchMode.value === 'author' && ['concept', 'question'].includes(detected.type) ? 'Author search' : detected.label) : '';
+  if (!value) elements.queryKind.textContent = '';
+  else if (elements.searchMode.value === 'author' && ['concept', 'question'].includes(detected.type)) {
+    const count = parseAuthorQuery(value).length;
+    elements.queryKind.textContent = count > 1 ? `${count}-author search · all required` : 'Author search';
+  } else elements.queryKind.textContent = detected.label;
 }
 
 function selectedSubjectIds() {
@@ -554,6 +558,7 @@ for (const [button, delta] of [[elements.previous, -1], [elements.next, 1]]) {
 document.querySelectorAll('[data-example]').forEach((button) => {
   button.addEventListener('click', () => {
     elements.query.value = button.dataset.example;
+    if (button.dataset.exampleMode) elements.searchMode.value = button.dataset.exampleMode;
     updateQueryKind();
     void runSearch();
   });

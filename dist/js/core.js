@@ -112,6 +112,15 @@ export function authorNameMatches(query = '', candidate = '') {
   });
 }
 
+export function parseAuthorQuery(query = '') {
+  return String(query).split(/\s*\+\s*/).map((name) => name.trim()).filter(Boolean);
+}
+
+export function authorsMatchQuery(query = '', authors = []) {
+  const requested = parseAuthorQuery(query);
+  return requested.length > 0 && requested.every((name) => authors.some((author) => authorNameMatches(name, author)));
+}
+
 function sourceList(value) {
   return Array.isArray(value) ? value : value ? [value] : [];
 }
