@@ -225,6 +225,11 @@ select { padding: 0 42px 0 15px; cursor: pointer; }
 .search-button:disabled { cursor: wait; opacity: .78; }
 .search-button svg { width: 19px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 
+.author-help { margin: 12px 18px 0; color: var(--muted); font-size: .82rem; }
+.author-help strong { color: var(--ink); }
+.author-help kbd, .author-help span { font-family: var(--mono); color: var(--cobalt); }
+.author-help kbd { padding: 1px 5px; border: 1px solid var(--rule); border-radius: 3px; background: #fff; }
+
 .example-row { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; padding: 13px 18px 10px; font-size: .86rem; color: var(--muted); }
 .example-row > span { font-family: var(--mono); font-size: .74rem; text-transform: uppercase; letter-spacing: .1em; }
 .example-row button { border: 0; background: transparent; color: var(--cobalt); padding: 3px 4px; cursor: pointer; text-decoration: underline; text-decoration-color: rgba(36,87,214,.3); text-underline-offset: 3px; }
