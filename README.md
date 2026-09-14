@@ -10,6 +10,14 @@ The static site works immediately with Crossref, OpenAlex, and INSPIRE-HEP. An o
 
 Search defaults to Automatic, which recognizes an initial followed by a capitalized surname (for example, `A. Einstein`) as an author query. Choose Author name for full names or All fields to explicitly request a broad search. Author matching checks the first given name/initial and the full surname. Initials cannot distinguish different researchers with the same initial and surname; the source databases include non-physics literature.
 
+### Physics scope
+
+Physics-related records are shown by default. Enable **Include other disciplines** to display every retrieved record; this is saved in share links as `disciplines=all`. Unclassified records remain available in a separate expandable review section. Exact DOI/arXiv/other identifier lookups bypass the scope restriction.
+
+Classification uses OpenAlex's primary topic field (Physics and Astronomy), physics category/subject labels, INSPIRE provenance, and recognizable physics journal names. Metadata is retained when duplicate records merge. Classification is approximate, not a comprehensive physics ontology: interdisciplinary work or journals without recognizable metadata can be unclassified. A missing classification is never treated as proof that a paper is outside physics. Titles and author names alone do not establish physics relevance.
+
+Filtering is applied to the retrieved batch, including gateway responses and subsequent Load more batches. Hidden and unclassified counts are shown; Load more may reveal additional physics papers. Area filters remain source-dependent and narrow the provider query independently of this display scope. OpenAlex topic field documentation: https://help.openalex.org/data/fields/
+
 The latest corrections preserve Load more after batches with no matching authors, add INSPIRE pagination, accept compact uppercase initials such as `BP Abbott`, and reset concept examples to All fields mode. A note beside the results explains source-specific area filtering. Direct-mode continuation now covers OpenAlex, Crossref, and INSPIRE; the optional gateway still returns one batch.
 
 - Choose 5, 10, 20, 50, or all retrieved entries per page, with Previous/Next navigation. Changing the page size or sort order resets to page one without another API request. The count is the number retrieved in this search, not a provider's total number of matches.

@@ -1,11 +1,13 @@
 import { citationDestination } from './js/citation-lookup.js?v=1.4.0';
 import { CONFIG } from './js/config.js?v=1.5.0';
-import { citationLabels, detectQuery, formatDate, paginateResults, dedupeResults, parseAuthorQuery, resolveSearchMode } from './js/core.js?v=1.9.0';
-import { searchDirectSources, searchGateway, SOURCE_CATALOG } from './js/providers.js?v=1.9.0';
+import { citationLabels, detectQuery, formatDate, paginateResults, dedupeResults, parseAuthorQuery, resolveSearchMode } from './js/core.js?v=1.10.0';
+import { searchDirectSources, searchGateway, SOURCE_CATALOG } from './js/providers.js?v=1.10.0';
+import { physicsScope, scopeResults } from './js/physics-scope.js?v=1.10.0';
 import { getSubject, normalizeSubjectIds, subjectSelectionLabel, SUBJECTS } from './js/subjects.js?v=1.5.0';
 
 const elements = {
   form: document.querySelector('#search-form'),
+  includeOther: document.querySelector('#include-other'),
   query: document.querySelector('#query'),
   subjectPicker: document.querySelector('#subject-picker'),
   subjectSummary: document.querySelector('#subject-summary'),
@@ -283,6 +285,7 @@ function resultCard(result) {
   card.append(footer);
 
   const facts = element('div', { className: 'result-facts' });
+  facts.append(element('span', { text: ({ physics: 'Physics-related metadata', other: 'Other discipline', unknown: 'Subject unclassified' })[physicsScope(result)] }));
   if (result.venue) facts.append(element('span', { text: result.venue }));
   const metrics = result.citationMetrics || [];
   for (const label of citationLabels(metrics)) {
@@ -304,8 +307,13 @@ function resultCard(result) {
   return card;
 }
 
+function scopedResults() {
+  return scopeResults(state.results, { includeOther: elements.includeOther.checked,
+    exactIdentifier: !['concept', 'question'].includes(detectQuery(state.query).type) });
+}
+
 function sortedResults() {
-  const items = [...state.results];
+  const items = [...scopedResults().visible];
   switch (elements.sort.value) {
     case 'newest': return items.sort((a, b) => String(b.date || b.year || '').localeCompare(String(a.date || a.year || '')));
     case 'oldest': return items.sort((a, b) => String(a.date || a.year || '9999').localeCompare(String(b.date || b.year || '9999')));
@@ -315,7 +323,25 @@ function sortedResults() {
 }
 
 function renderResults() {
+  const groups = scopedResults();
   const items = sortedResults();
+  const scopeLabel = !['concept', 'question'].includes(detectQuery(state.query).type)
+    ? 'Exact identifier · scope bypassed' : elements.includeOther.checked ? 'All disciplines included' : 'Physics-related results';
+  elements.resultSummary.textContent = `${scopeLabel} · area selection: ${subjectSelectionLabel(state.subjectIds)} · metadata-based scope`;
+  elements.resultsTitle.textContent = `${items.length} matching records`;
+  elements.status.textContent = `${items.length} displayed-scope results for ${state.query}.`;
+  elements.list.parentNode.querySelector('#scope-details')?.remove();
+  const scopeDetails = element('div', { id: 'scope-details' });
+  const unrestricted = elements.includeOther.checked || !['concept', 'question'].includes(detectQuery(state.query).type);
+  scopeDetails.append(element('p', { className: 'author-help', text: `${groups.physics.length} physics-related · ${groups.other.length} other-discipline · ${groups.unknown.length} unclassified records retrieved. ${unrestricted ? 'All retrieved disciplines are included.' : 'Other disciplines are hidden. Unclassified papers are not counted as physics results.'} Load more to check further source records.` }));
+  if (!unrestricted && groups.unknown.length) {
+    const details = element('details', {}, element('summary', { text: `Review ${groups.unknown.length} unclassified records — may include physics` }));
+    details.addEventListener('toggle', () => {
+      if (details.open && details.childNodes.length === 1) details.append(...groups.unknown.map(resultCard));
+    });
+    scopeDetails.append(details);
+  }
+  elements.list.after(scopeDetails);
   const pagination = paginateResults(items, elements.pageSize.value, state.page);
   state.page = pagination.page;
   elements.pagination.hidden = pagination.pageCount <= 1;
@@ -328,7 +354,7 @@ function renderResults() {
     const empty = element('div', { className: 'empty-state' },
       element('span', { className: 'empty-symbol', text: '∅', attrs: { 'aria-hidden': 'true' } }),
       element('h3', { text: 'No matching records found' }),
-      element('p', { text: 'Try a shorter concept, a broader subject area, or verify the identifier. Some papers may only appear when the serverless gateway is enabled.' }),
+      element('p', { text: 'Review unclassified records below, load more source records, or enable Include other disciplines. You can also try a broader query or an exact identifier.' }),
       element('button', { className: 'retry-button', type: 'button', text: 'Try again', onClick: () => runSearch() }),
     );
     elements.list.replaceChildren(empty);
@@ -358,6 +384,8 @@ function renderFailure(error) {
 
 function updateUrl(query, subjectIds, searchMode) {
   const url = new URL(window.location.href);
+  if (elements.includeOther.checked) url.searchParams.set('disciplines', 'all');
+  else url.searchParams.delete('disciplines');
   url.searchParams.set('q', query);
   if (subjectIds.length === 1 && subjectIds[0] === 'all') url.searchParams.delete('areas');
   else url.searchParams.set('areas', subjectIds.join(','));
@@ -389,6 +417,7 @@ async function runSearch(overrides = {}) {
   state.controller = controller;
   state.continuation = {};
   state.records = [];
+  state.retrievedAt = null;
   elements.morePanel.hidden = true;
   state.query = query;
   state.subjectIds = subjectIds;
@@ -408,6 +437,7 @@ async function runSearch(overrides = {}) {
   elements.pagination.hidden = true;
   elements.displaySummary.hidden = true;
   renderSkeletons();
+  document.querySelector('#scope-details')?.remove();
   elements.status.textContent = `Searching for ${query}.`;
   updateUrl(query, subjectIds, requestedMode);
 
@@ -453,7 +483,6 @@ async function runSearch(overrides = {}) {
     elements.resultSummary.textContent = `${subjectSelectionLabel(subjectIds)} · merged and ranked · retrieved ${retrieved}`;
     elements.sort.disabled = state.results.length < 2;
     renderResults();
-    elements.status.textContent = `${state.results.length} results found for ${query}.`;
     elements.results.focus({ preventScroll: false });
     return data;
   } catch (error) {
@@ -502,7 +531,6 @@ async function loadMore() {
     updateSourceStatuses([...sources.values()]);
     state.page = 1;
     renderResults();
-    elements.resultsTitle.textContent = `${state.results.length} distinct record${state.results.length === 1 ? '' : 's'}`;
     const failed = data.sources.some(source => source.state === 'error');
     const remaining = Object.keys(state.continuation).length > 0;
     elements.moreStatus.textContent = `${Math.max(0, state.results.length - previousCount)} additional distinct records loaded. ${failed ? 'Some sources failed; load more to retry their batch.' : remaining ? 'More results are available.' : 'No more results are available from these source searches.'}`;
@@ -521,6 +549,10 @@ async function loadMore() {
   }
 }
 elements.more.addEventListener('click', () => void loadMore());
+elements.includeOther.addEventListener('change', () => {
+  updateUrl(elements.query.value.trim(), selectedSubjectIds(), elements.searchMode.value);
+  if (!state.loading && state.retrievedAt) { state.page = 1; renderResults(); }
+});
 
 elements.form.addEventListener('submit', (event) => {
   event.preventDefault();
@@ -607,9 +639,10 @@ async function registerWebMcp() {
           query: input.query,
           subjects: subjectIds,
           mode: searchMode,
-          resultCount: data.results?.length || 0,
+          resultCount: scopedResults().visible.length,
+          unclassifiedCount: scopedResults().unknown.length,
           respondingSources: (data.sources || []).filter((source) => source.state === 'success').map((source) => source.label),
-          topResults: (data.results || []).slice(0, 5).map((result) => ({ title: result.title, doi: result.doi || null, arxivId: result.arxivId || null, url: safeUrl(result.primaryUrl) || null })),
+          topResults: sortedResults().slice(0, 5).map((result) => ({ title: result.title, doi: result.doi || null, arxivId: result.arxivId || null, url: safeUrl(result.primaryUrl) || null })),
         };
       },
     }, { signal: lifecycle.signal });
@@ -621,6 +654,7 @@ async function registerWebMcp() {
 void registerWebMcp();
 
 const initialParams = new URLSearchParams(window.location.search);
+elements.includeOther.checked = initialParams.get('disciplines') === 'all';
 const initialQuery = initialParams.get('q')?.trim();
 const initialAreas = initialParams.get('areas') || initialParams.get('area');
 if (initialQuery) {

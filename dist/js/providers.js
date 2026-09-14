@@ -1,4 +1,4 @@
-import { abstractFromIndex, authorNameMatches, authorsMatchQuery, citationMetrics, dedupeResults, detectQuery, normalizeArxiv, normalizeDoi, parseAuthorQuery, stripMarkup, supportsQuery } from './core.js?v=1.9.0';
+import { abstractFromIndex, authorNameMatches, authorsMatchQuery, citationMetrics, dedupeResults, detectQuery, normalizeArxiv, normalizeDoi, parseAuthorQuery, stripMarkup, supportsQuery } from './core.js?v=1.10.0';
 import { getSubjects, normalizeSubjectIds } from './subjects.js?v=1.5.0';
 
 const SOURCE_CATALOG = [
@@ -58,6 +58,7 @@ function openAlexResult(work, rank) {
     citationCount: work.cited_by_count ?? null,
     citationMetrics: citationMetrics('OpenAlex', work.cited_by_count, work.id),
     subject: work.primary_topic?.display_name || '',
+    disciplineFields: work.primary_topic?.field ? [work.primary_topic.field] : [],
     score: 1 / (60 + rank),
   };
 }

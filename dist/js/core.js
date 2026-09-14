@@ -209,6 +209,8 @@ function mergePair(a, b) {
     sources: [...new Set([...sourceList(a.sources), ...sourceList(b.sources)])],
     links,
     externalIds,
+    disciplineFields: [...(a.disciplineFields || []), ...(b.disciplineFields || [])],
+    subject: [...new Set([a.subject, b.subject].filter(Boolean))].join(' · '),
     score: Number(a.score || 0) + Number(b.score || 0) + 0.035,
   };
 }
