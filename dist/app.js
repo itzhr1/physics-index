@@ -1,7 +1,7 @@
 import { citationDestination } from './js/citation-lookup.js?v=1.4.0';
 import { CONFIG } from './js/config.js?v=1.5.0';
-import { citationLabels, detectQuery, formatDate, paginateResults, dedupeResults, parseAuthorQuery } from './js/core.js?v=1.6.0';
-import { searchDirectSources, searchGateway, SOURCE_CATALOG } from './js/providers.js?v=1.6.0';
+import { citationLabels, detectQuery, formatDate, paginateResults, dedupeResults, parseAuthorQuery } from './js/core.js?v=1.8.0';
+import { searchDirectSources, searchGateway, SOURCE_CATALOG } from './js/providers.js?v=1.8.0';
 import { getSubject, normalizeSubjectIds, subjectSelectionLabel, SUBJECTS } from './js/subjects.js?v=1.5.0';
 
 const elements = {
@@ -558,7 +558,7 @@ for (const [button, delta] of [[elements.previous, -1], [elements.next, 1]]) {
 document.querySelectorAll('[data-example]').forEach((button) => {
   button.addEventListener('click', () => {
     elements.query.value = button.dataset.example;
-    if (button.dataset.exampleMode) elements.searchMode.value = button.dataset.exampleMode;
+    elements.searchMode.value = button.dataset.exampleMode || 'all';
     updateQueryKind();
     void runSearch();
   });

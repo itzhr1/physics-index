@@ -1,4 +1,4 @@
-import { abstractFromIndex, authorNameMatches, authorsMatchQuery, citationMetrics, dedupeResults, detectQuery, normalizeArxiv, normalizeDoi, parseAuthorQuery, stripMarkup, supportsQuery } from './core.js?v=1.6.0';
+import { abstractFromIndex, authorNameMatches, authorsMatchQuery, citationMetrics, dedupeResults, detectQuery, normalizeArxiv, normalizeDoi, parseAuthorQuery, stripMarkup, supportsQuery } from './core.js?v=1.8.0';
 import { getSubjects, normalizeSubjectIds } from './subjects.js?v=1.5.0';
 
 const SOURCE_CATALOG = [
@@ -131,7 +131,8 @@ async function searchOpenAlex({ query, subjectIds, searchMode, signal, timeoutMs
   const payload = await fetchJson(`https://api.openalex.org/works?${params}`, { signal, timeoutMs });
   const records = (payload.results || []).map((work, rank) => openAlexResult(work, rank + offset))
     .filter((work) => searchMode !== 'author' || authorsMatchQuery(query, work.authors));
-  records.next = records.length && payload.meta?.next_cursor ? { cursor: payload.meta.next_cursor, offset: offset + records.length } : null;
+  const retrievedCount = (payload.results || []).length;
+  records.next = retrievedCount && payload.meta?.next_cursor ? { cursor: payload.meta.next_cursor, offset: offset + retrievedCount } : null;
   return records;
 }
 
@@ -150,7 +151,7 @@ async function searchCrossref({ query, searchMode, signal, timeoutMs, limit, off
     .map((work, rank) => crossrefResult(work, rank + offset))
     .filter((work) => searchMode !== 'author' || authorsMatchQuery(query, work.authors));
   const nextOffset = offset + items.length;
-  records.next = records.length && nextOffset < (payload.message?.['total-results'] ?? nextOffset) && nextOffset <= 10000 ? { offset: nextOffset } : null;
+  records.next = items.length && nextOffset < (payload.message?.['total-results'] ?? nextOffset) && nextOffset <= 10000 ? { offset: nextOffset } : null;
   return records;
 }
 
@@ -185,7 +186,7 @@ function escapeInspire(value = '') {
   return String(value).replace(/["\\]/g, '\\$&');
 }
 
-async function searchInspire({ query, subjectIds, searchMode, signal, timeoutMs, limit, offset = 0 }) {
+async function searchInspire({ query, subjectIds, searchMode, signal, timeoutMs, limit, offset = 0, page = 1 }) {
   const detected = detectQuery(query);
   const exactPath = detected.type === 'doi' ? `/api/doi/${encodeURIComponent(detected.value)}` : detected.type === 'arxiv' ? `/api/arxiv/${encodeURIComponent(detected.value)}` : '';
   let payload;
@@ -197,12 +198,18 @@ async function searchInspire({ query, subjectIds, searchMode, signal, timeoutMs,
     const term = searchMode === 'author'
       ? parseAuthorQuery(detected.value).map((name) => `a "${escapeInspire(name)}"`).join(' and ')
       : escapeInspire(detected.value);
-    const params = new URLSearchParams({ q: `${term}${category}`, size: String(Math.min(limit, 50)), page: String(Math.floor(offset / Math.max(limit, 1)) + 1) });
+    const params = new URLSearchParams({ q: `${term}${category}`, size: String(Math.min(limit, 50)), page: String(page) });
     payload = await fetchJson(`https://inspirehep.net/api/literature?${params}`, { signal, timeoutMs });
   }
   const hits = payload.hits?.hits || (payload.metadata ? [payload] : []);
-  return hits.map((hit, rank) => inspireResult(hit, rank + offset))
+  const records = hits.map((hit, rank) => inspireResult(hit, rank + offset))
     .filter((work) => searchMode !== 'author' || authorsMatchQuery(query, work.authors));
+  const total = payload.hits?.total;
+  const totalCount = typeof total === 'number' ? total : total?.value;
+  const nextOffset = offset + hits.length;
+  const hasMore = Boolean(payload.links?.next) || (Number.isFinite(totalCount) && nextOffset < totalCount);
+  records.next = !exactPath && hits.length && hasMore ? { page: page + 1, offset: nextOffset } : null;
+  return records;
 }
 
 function sourceStatus(id, state, detail = '') {

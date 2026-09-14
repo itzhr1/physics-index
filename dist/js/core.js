@@ -80,7 +80,8 @@ function nameTokens(value = '') {
   const cleaned = stripMarkup(value);
   const commaParts = cleaned.split(',').map((part) => part.trim()).filter(Boolean);
   const canonical = commaParts.length === 2 ? `${commaParts[1]} ${commaParts[0]}` : cleaned;
-  return canonical
+  // Expand compact uppercase initials before the surname: BP Abbott.
+  return canonical.replace(/\b[A-Z]{2,4}(?=\s+\S)/g, (initials) => initials.split('').join(' '))
     .toLowerCase()
     .normalize('NFKD')
     .replace(/[\u0300-\u036f]/g, '')
