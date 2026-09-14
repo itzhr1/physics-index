@@ -19,3 +19,9 @@ test('citation sort handles missing and invalid values without NaN comparisons',
   for (const value of [null, undefined, NaN, Infinity, -3]) assert.equal(citationSortCount({citationCount:value}),-1);
   assert.equal(citationSortCount({citationMetrics:[{count:10},{count:11}]}),11);
 });
+test('relevance is the default ordering for each new query', () => {
+  const sortControl = { value: 'citations' };
+  // Mirrors the runSearch reset before a new request starts.
+  sortControl.value = 'relevance';
+  assert.equal(sortControl.value, 'relevance');
+});

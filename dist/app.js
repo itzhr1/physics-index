@@ -417,6 +417,9 @@ async function runSearch(overrides = {}) {
   state.continuation = {};
   state.records = [];
   state.retrievedAt = null;
+  // Every new query starts from the stable relevance ranking. Users can then
+  // choose Most cited (or another sort) for that result set.
+  elements.sort.value = 'relevance';
   elements.morePanel.hidden = true;
   state.query = query;
   state.subjectIds = subjectIds;
